@@ -3,10 +3,10 @@ import soundPlayer
 import tda
 class Editor():
 	def __init__(self):
-		self.timeline = tda.ListaEnlazada()
-		self.cursor = None
-		self.pila = tda.Pila()
-		self.tracks = tda.ListaEnlazada()
+		self.timeline = tda.ListaEnlazada()		#marks
+		self.cursor = None						#hace referencia al mark actual
+		self.pila = tda.Pila()					#aux para retroceder
+		self.tracks = tda.ListaEnlazada()		#tracks o canales que tendra la cancion
 		self.sound = {"sine": soundPlayer.SoundFactory.get_sine_sound,
 			 "squa": soundPlayer.SoundFactory.get_square_sound,
 			 "sile": soundPlayer.SoundFactory.get_silence_sound,
@@ -15,14 +15,15 @@ class Editor():
 	def avanzar(self, N):
 		N = int(N)
 		cont = 0
-		self.cursor = self.timeline.prim
-		while cont < N:
-			self.cursor = self.timeline.prim.prox
-			self.pila.apilar(self.cursor)
+		actual = self.timeline.prim
+		while cont < N and actual is not None:
+			actual = actual.prox
+			self.pila.apilar(actual)
+		self.cursor = actual.dato
 	def retroceder(self, N):
 		if not self.pila.esta_vacia():
 			for _ in range (N):
-				self.cursor = self.pila.desapilar()
+				self.cursor = self.pila.desapilar().dato
 editor = Editor()
 class Shell(cmd.Cmd):
 	intro = "Bienvenido a mi programa.\n Ingrese help o ? para listar los comandos.\n"
@@ -48,7 +49,6 @@ class Shell(cmd.Cmd):
 		do_BACKM(1)
 	def do_STEPM (self, N):
 		"""Avanza N marcas de tiempo hacia adelante. Si no hay mas marcas hacia adelante, no hace nada."""
-		
 		editor.avanzar(int(N))
 	def do_BACKM (self, N):
 		"""Retrocede N marcas de tiempo hacia atras. Si no hay mas marcas hacia atras, no hace nada."""
@@ -63,7 +63,7 @@ class Shell(cmd.Cmd):
 		"""Elimina un track por numero.Si no se especifica uno elimina\n
 		el ultimo tarck.\n
 			-> posicion(int)"""
-		tracks.pop(posicion)
+		editor.tracks.pop(posicion)
 	def do_MARKADD(self,duration):
 		"""Agrega una marca de tiempo de la duracion establecida.\n
 		Originalmente todos los tracks arrancan como deshabilitados."""
