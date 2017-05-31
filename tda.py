@@ -1,11 +1,10 @@
-
 class _Nodo:
 	'''Representacion de un nodo'''
-	def __init__(self, dato, prox=None, prev = None):
+	def __init__(self, dato, prox=None):
 		"""Constructor del nodo"""
 		self.dato = dato
 		self.prox = prox
-		self.prev = prev
+
 class ListaEnlazada:
 	"""Clase la lista enlazada"""
 	def __init__(self):
@@ -110,7 +109,7 @@ class _IteradorListaEnlazada:
 		if self.actual is None:
 			raise StopIteration()
 		dato = self.actual.dato
-		self.actual = self.actual.prev
+		self.actual = self.actual.prox
 		return dato
 class Pila:
 	"""docstring for Pila"""
