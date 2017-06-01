@@ -4,6 +4,7 @@ import tda
 import csv
 from os.path import isfile
 
+
 def validar_entero(n):
     """Recibe n devolviendolo como int. Si no puede convertir levanta\n
     excepcion.\n
@@ -68,7 +69,7 @@ class Reproductor:
 
     def play(self,n):
         if editor.timeline.len == 0:
-            raise ValueError ("No hay marcas para reproducir")
+            print("No hay marcas para reproducir")
         reproductor = soundPlayer.SoundPlay(len(editor.tracks))
         actual = editor.cursor
         cont = 0
@@ -85,6 +86,7 @@ class Reproductor:
             mark["duracion"]=duracion
             actual = actual.prox
             cont += 1
+
 
 class Almacenamiento:
     """Clase encargada de guardar y cargar el archivo .plp"""
@@ -188,7 +190,7 @@ class Shell(cmd.Cmd):
             volumen = 100
         frecuencia = validar_entero(frecuencia)
         if not funcion in editor.sound:
-            raise ValueError("La funcion ingresada no esta definida")
+            print("La funcion ingresada no esta definida")
         editor.tracks.append((funcion, frecuencia, volumen))
 
     def do_trackdel(self, posicion=None):
@@ -200,7 +202,7 @@ class Shell(cmd.Cmd):
         else:
             posicion = validar_entero(posicion)
         if posicion<0 or posicion>len(editor.tracks):
-            raise IndexError ("La posicion ingresada no corresponde a un track ingresado")
+            print("La posicion ingresada no corresponde a un track ingresado")
         editor.tracks.pop(int(posicion))
 
     def do_markadd(self, duration):
