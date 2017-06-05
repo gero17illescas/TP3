@@ -45,7 +45,7 @@ class Almacenamiento():
 					track = next(datos_csv)[1].split("|")
 					funcion = track[0]
 					frecuencia = float(track[1])
-					volumen = float(track[2])
+					volumen = float(track[2])/100
 					self.editor.tracks.append((funcion, frecuencia, volumen))
 				#leemos las marcas
 				for mark in datos_csv:
@@ -59,3 +59,4 @@ class Almacenamiento():
 					self.editor.timeline.append(marca)
 			self.editor.cursor = self.editor.timeline.prim
 			return self.editor
+

@@ -2,16 +2,13 @@ import cmd, sys
 import editor as e
 import reproductor as r
 import almacenamiento as a
-MENSAJE=(" Bienvenido a mi FIUBA Music editor.\n"+
-" Antes de activar los tracks debe crear al menos una marca.\n"+
-" Cuando carga un archivo elimina todo lo que este en memoria.\n"+
-" Ingrese help o ? para listar los comandos.\n")
 def es_entero(n):
 	"""Recibe y devuelve un booleano si es \n
 		->n(int ó str): es el valor validarse como entero"""
 	if type(n) == int and n >= 0:
 		return True
 	return n.isdigit() and int(n) >= 0
+
 def validar_parametro(argumento, max=None):
 	"""Recibe un argumento y si cumple las condiciones lo devulve (int)\n
 	Caso contrario devulve None.\n
@@ -20,22 +17,18 @@ def validar_parametro(argumento, max=None):
 	if es_entero(argumento):
 		argumento = int(argumento)
 		if max is not None:
-			if argumento < max:
-				return argumento
-			else:
-				print("Se ingreso un numero mayor que ",max)
+			if argumento >= max:
+				print("Ingrese un numero menor que ",max)
 				return None
-		else:
-			return argumento
+		return argumento
 	else:
 		print("Lo ingresado no es un numero")
 		return None
-class _Mark():
-	"""Representacion de una marca."""
-	def __init__(self, duracion):
-		"""Constructor"""
-		self.duracion = duracion
-		self.tracks = {}
+
+MENSAJE=(" Bienvenido a mi FIUBA Music editor.\n"+
+" Antes de activar los tracks debe crear al menos una marca.\n"+
+" Cuando carga un archivo elimina todo lo que este en memoria.\n"+
+" Ingrese help o ? para listar los comandos.\n")
 class Shell(cmd.Cmd):
 	intro = MENSAJE
 	prompt = "*>>"
@@ -70,7 +63,7 @@ class Shell(cmd.Cmd):
 	def do_avanzarm (self, n):
 		"""Avanza N marcas de tiempo hacia adelante. Si no hay mas mar\n
 		cas hacia adelante, no hace nada."""
-		n=validar_parametro(n) 
+		n = validar_parametro(n) 
 		if n:
 			self.editor.avanzar(n)
 			print("Marca: ",self.editor.index)
@@ -91,9 +84,9 @@ class Shell(cmd.Cmd):
 			funcion, frecuencia, volumen= lista_p[0], lista_p[1], lista_p[2]
 		else:
 			funcion, frecuencia = lista_p[0], lista_p[1]
-			volumen = 100
+			volumen = 1
 		frecuencia = validar_parametro(frecuencia)
-		volumen = validar_parametro(volumen)
+		volumen = validar_parametro(volumen)/100
 		if funcion in self.editor.sound:
 			self.editor.tracks.append((funcion, frecuencia, volumen))
 			return
@@ -118,8 +111,8 @@ class Shell(cmd.Cmd):
 		duration = validar_parametro(duration) 
 		if duration:
 			self.editor.timeline.append( _Mark(duration/100))
-			self.editor.cursor = self.editor.timeline.prim
-
+			if self.editor.index == 0:
+				self.editor.cursor = self.editor.timeline.prim
 	def do_markaddnext(self, duration):
 		"""Igual que MARKADD pero la inserta luego de la marca en la \n
 		cual esta actualmente el cursor."""
@@ -145,7 +138,7 @@ class Shell(cmd.Cmd):
 		"""Operacion inversa del TRACKON."""
 		duration = validar_parametro(indice,len(self.editor.tracks)) 
 		if duration is not None:
-			self.editor.cursor.dato.tracks.pop(self.editor.tracks[indice])
+			self.editor.cursor.dato.tracks.pop(self.editor.tracks[indice],False)
 
 	def do_play(self, x = None):
 		"""Reproduce la marca en la que se encuentra el cursor actual\n
@@ -172,21 +165,21 @@ class Shell(cmd.Cmd):
 		reproduccion se corta antes."""
 		n = validar_parametro(n)
 		if n:
-			r.Reproductor(self.editor)(self.editor.timeline.len,n)
+			r.Reproductor(self.editor).play(self.editor.timeline.len, n)
 
 	def do_imprimir(self, x = None):
 		"""Imprime la timeline que se tiene hasta el momento"""
-		for (funcion, frecuencia, volumen) in self.editor.tracks:
-			print("Funcion: {} Frecuencia: {} Volumen: {}".format(funcion, frecuencia, volumen))
-		cont = 0
-		for mark in self.editor.timeline:
-			cadena = "["+str(mark.duracion)+"]: "
+		for i,(funcion, frecuencia, volumen) in enumerate(self.editor.tracks):
+			print(str(i)+" Funcion: {} Frecuencia: {} Volumen: {}".format(funcion, frecuencia, volumen*100))
+		print("N marca\tduracion\ttrackon")
+		for i,mark in enumerate(self.editor.timeline):
+			cadena = str(i)+"\t["+str(mark.duracion)+"]\t: "
 			for track in self.editor.tracks:
 				cadena += mark.tracks.get(track,".")
-			if self.editor.index == cont:
+			if self.editor.index == i:
 				cadena += "<-"	#Señala el cursor
-			cont += 1
 			print(cadena)
+			
 	def do_salir(self, x = None):
 		"""Sale del programa"""
 		print("Hasta luego")

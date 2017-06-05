@@ -19,8 +19,8 @@ class Reproductor:
 		cont_seg = 0
 		while actual is not None and cont_marcas < marcas:
 			mark = actual.dato
-			if segundos:
-				if cont_seg == segundos:
+			if segundos is not None:
+				if cont_seg >= segundos:
 					return
 				cont_seg += mark.duracion
 			lista_aux = []

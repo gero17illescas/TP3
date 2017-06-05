@@ -25,19 +25,19 @@ class Editor:
 			-> N (int): es la cantidad de pasos."""
 		cont = 0
 		actual = self.cursor
-		while cont < n and actual.prox is not None:
-			self.index += n
+		while cont < n and actual.prox:
 			self.pila.apilar(actual)
 			actual = actual.prox
 			cont += 1
+			self.index += 1
 		self.cursor = actual
 
 	def retroceder(self, n):
 		"""Avanza N nodos sobre donde se encuentra el cursor.\n
 		Si se llega al principio de la lista deja de retroceder.\n
 			-> N (int): es la cantidad de pasos."""
-		self.index -= n
 		cont = 0
 		while cont < n and not self.pila.esta_vacia():
 			self.cursor = self.pila.desapilar()
 			cont += 1
+			self.index -= 1
