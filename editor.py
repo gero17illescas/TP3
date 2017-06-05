@@ -17,13 +17,10 @@ def validar_parametro(argumento, max=None):
 	if es_entero(argumento):
 		argumento = int(argumento)
 		if max is not None:
-			if argumento < max:
-				return argumento
-			else:
-				print("Se ingreso un numero mayor que ",max)
+			if argumento >= max:
+				print("Ingrese un numero menor que ",max)
 				return None
-		else:
-			return argumento
+		return argumento
 	else:
 		print("Lo ingresado no es un numero")
 		return None
@@ -60,22 +57,22 @@ class Editor:
 			-> N (int): es la cantidad de pasos."""
 		cont = 0
 		actual = self.cursor
-		while cont < n and actual.prox is not None:
-			self.index += n
+		while cont < n and actual.prox:
 			self.pila.apilar(actual)
 			actual = actual.prox
 			cont += 1
+			self.index += 1
 		self.cursor = actual
 
 	def retroceder(self, n):
 		"""Avanza N nodos sobre donde se encuentra el cursor.\n
 		Si se llega al principio de la lista deja de retroceder.\n
 			-> N (int): es la cantidad de pasos."""
-		self.index -= n
 		cont = 0
 		while cont < n and not self.pila.esta_vacia():
 			self.cursor = self.pila.desapilar()
 			cont += 1
+			self.index -= 1
 
 class Reproductor:
 	"""Clase encargada de reproducir la cancion."""
@@ -94,11 +91,11 @@ class Reproductor:
 		reproductor = soundPlayer.SoundPlayer(len(self.editor.tracks))
 		actual = self.editor.cursor
 		cont_marcas = 0
-		cont_seg = 0
+		cont_seg = 0)
 		while actual is not None and cont_marcas < marcas:
 			mark = actual.dato
-			if segundos:
-				if cont_seg == segundos:
+			if segundos is not None:
+				if cont_seg >= segundos:
 					return
 				cont_seg += mark.duracion
 			lista_aux = []
@@ -140,7 +137,6 @@ class Almacenamiento():
 		if not isfile(file):
 			print("El archivo no existe")
 		else:
-			self.editor = Editor()
 			with open(file,"r") as f:
 				datos_csv = csv.reader(f)
 				next(datos_csv)
@@ -150,7 +146,7 @@ class Almacenamiento():
 					track = next(datos_csv)[1].split("|")
 					funcion = track[0]
 					frecuencia = float(track[1])
-					volumen = float(track[2])
+					volumen = float(track[2])/100
 					self.editor.tracks.append((funcion, frecuencia, volumen))
 				#leemos las marcas
 				for mark in datos_csv:
@@ -176,13 +172,12 @@ class Shell(cmd.Cmd):
 		"""Constructor de la clase"""
 		super().__init__()
 		self.editor = Editor()
-		self.almacenamiento = Almacenamiento(self.editor)
 
 	def do_cargar(self,file):
 		"""Carga la cancion desde el archivo.\n
 		Reemplaza la cancion en edicion actual si es que la hay.\n
 			-> file (str)"""
-		self.editor = Almacenamiento(self.editor).cargar(file+".plp")
+		self.editor = Almacenamiento(Editor()).cargar(file+".plp")
 
 	def do_guardar(self,file):
 		"""Guarda la cancion.\n
@@ -225,9 +220,9 @@ class Shell(cmd.Cmd):
 			funcion, frecuencia, volumen= lista_p[0], lista_p[1], lista_p[2]
 		else:
 			funcion, frecuencia = lista_p[0], lista_p[1]
-			volumen = 100
+			volumen = 1
 		frecuencia = validar_parametro(frecuencia)
-		volumen = validar_parametro(volumen)
+		volumen = validar_parametro(volumen)/100
 		if funcion in self.editor.sound:
 			self.editor.tracks.append((funcion, frecuencia, volumen))
 			return
@@ -252,8 +247,8 @@ class Shell(cmd.Cmd):
 		duration = validar_parametro(duration) 
 		if duration:
 			self.editor.timeline.append( _Mark(duration/100))
-			self.editor.cursor = self.editor.timeline.prim
-
+			if self.editor.index == 0:
+				self.editor.cursor = self.editor.timeline.prim
 	def do_markaddnext(self, duration):
 		"""Igual que MARKADD pero la inserta luego de la marca en la \n
 		cual esta actualmente el cursor."""
@@ -274,12 +269,13 @@ class Shell(cmd.Cmd):
 		indice = validar_parametro(indice,len(self.editor.tracks)) 
 		if indice is not None:
 			self.editor.cursor.dato.tracks[self.editor.tracks[indice]] = "#"
+			print("hola")
 
 	def do_trackoff(self, indice):
 		"""Operacion inversa del TRACKON."""
 		duration = validar_parametro(indice,len(self.editor.tracks)) 
 		if duration is not None:
-			self.editor.cursor.dato.tracks.pop(self.editor.tracks[indice])
+			self.editor.cursor.dato.tracks.pop(self.editor.tracks[indice],False)
 
 	def do_play(self, x = None):
 		"""Reproduce la marca en la que se encuentra el cursor actual\n
@@ -306,21 +302,21 @@ class Shell(cmd.Cmd):
 		reproduccion se corta antes."""
 		n = validar_parametro(n)
 		if n:
-			Reproductor(self.editor)(self.editor.timeline.len,n)
+			Reproductor(self.editor).play(self.editor.timeline.len, n)
 
 	def do_imprimir(self, x = None):
 		"""Imprime la timeline que se tiene hasta el momento"""
-		for (funcion, frecuencia, volumen) in self.editor.tracks:
-			print("Funcion: {} Frecuencia: {} Volumen: {}".format(funcion, frecuencia, volumen))
-		cont = 0
-		for mark in self.editor.timeline:
-			cadena = "["+str(mark.duracion)+"]: "
+		for i,(funcion, frecuencia, volumen) in enumerate(self.editor.tracks):
+			print(str(i)+" Funcion: {} Frecuencia: {} Volumen: {}".format(funcion, frecuencia, volumen*100))
+		print("N marca\tduracion\ttrackon")
+		for i,mark in enumerate(self.editor.timeline):
+			cadena = str(i)+"\t["+str(mark.duracion)+"]\t: "
 			for track in self.editor.tracks:
 				cadena += mark.tracks.get(track,".")
-			if self.editor.index == cont:
+			if self.editor.index == i:
 				cadena += "<-"	#Señala el cursor
-			cont += 1
 			print(cadena)
+			
 	def do_salir(self, x = None):
 		"""Sale del programa"""
 		print("Hasta luego")
