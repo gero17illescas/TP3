@@ -8,20 +8,20 @@ import almacenamiento as a
 def es_entero(n):
     """Recibe y devuelve un booleano si es \n
         ->n(int ó str): es el valor validarse como entero"""
-    return isinstance(n, int)
+    return n.isdigit()
 
 
 def validar_parametro(argumento, maximo=None):
     """Recibe un argumento y si cumple las condiciones lo devulve (int)\n
-    Caso contrario devulve None.\n
+    Caso contrario devulve False.\n
         ->argumento(str)\n
         ->max(int): opcional\n"""
     if es_entero(argumento):
-        if maximo and argumento >= maximo:
+        if maximo and int(argumento) >= maximo:
             print("Ingrese un numero menor a", maximo)
             return False
         else:
-            return True
+            return int(argumento)
     else:
         print("Lo ingresado no es un numero")
         return False
